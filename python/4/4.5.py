@@ -15,12 +15,11 @@
 
 command1 = "switchport trunk allowed vlan 1,2,3,5,8"
 command2 = "switchport trunk allowed vlan 1,3,8,9"
-url=command1.split()
-url2=command2.split()
-frog=url[-1].split(",")
-frog2=url2[-1].split(",")
-result=set(frog).intersection(frog2)
-print(sorted(result))
+command1 = set(command1.split()[-1].split(','))
+command2 = set(command2.split()[-1].split(','))
+result = sorted(list(command1 & command2))
+
+print(result)
 
 
 
