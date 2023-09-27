@@ -40,6 +40,13 @@
                                     href="{{ url_for('secret_page') }}">Секретная страница</a>
                             </li>
                         {% endif %}
+
+                        {% if current_user.is_authenticated %}
+                            <li class="nav-item">
+                                <a class="nav-link {% if request.endpoint == 'visits' %} active {% endif %}"
+                                    href="{{ url_for('visits') }}">Количество посещений страницы</a>
+                            </li>
+                        {% endif %}
                     </ul>
                 </div>
             </div>
@@ -56,11 +63,19 @@
     {% endwith %}
 
     <main>
-        {% block content %}
-        <!-- <div class="container-fluid"> -->
+        <div class="container-fluid">
+            {% block content %}
             {% endblock %}
-        <!-- </div> -->
+        </div>
     </main>
+
+    <footer class="footer py-3 text-center fixed-bottom">
+        <div class="row">
+        </div>
+        <div class="border-top">
+          <p class="col-lg-6 mx-auto mt-3 text-black text-center">&copy; Karpov Aleksandr 211-331</p>
+        </div>
+    </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN"

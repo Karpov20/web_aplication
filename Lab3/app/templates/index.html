@@ -1,13 +1,9 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<!-- <div class="container-fluid"> -->
-<div class="d-flex my-5" style="justify-content: center; align-items: center; flex-direction: column;">
 {% if current_user.is_authenticated %}
-<h1>Hi, {{ current_user.login }}!</h1>
+Hi {{ current_user.login }}
 {% else %}
-    <h1>Добро пожаловать!</h1>
-    <h3>Авторизируйтесь</h3>
-</div>
+Non authenticated
 {% endif %}
 {% endblock %}

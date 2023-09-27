@@ -65,6 +65,6 @@ def get_users():
     users = [{
         "id": 1,
         "login": "user",
-        "password": "qwerty",
+        "password": "user",
     }]
     return users
