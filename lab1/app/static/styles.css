@@ -1,18 +1,12 @@
+* {
+    box-sizing: border-box;
+}
+
 body {
-    font-size: 1.25rem;
+    font-size: 20px;
 }
 
 .avatar {
     max-width: 100%;
-}
-
-.card-img-post {
-    max-width: 80%;
-    margin: 10px auto 30px;
-    display: block;
-}
-
-.comment {
-    border: 2px solid lightgray;
-    border-radius: 10px;
+    max-height: 100%;
 }
