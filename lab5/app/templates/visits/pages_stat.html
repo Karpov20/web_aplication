@@ -1,6 +1,6 @@
 {% extends 'visits/base.html' %}
 
-{% block tab_content %}
+{% block logs %}
 <table class="table">
     <thead>
         <tr>
@@ -16,21 +16,20 @@
         </tr>
     </thead>
     <tbody>
-        {% for record in records %}
+        {% for log in logs %}
         <tr>
             <td>
                 {{loop.index}}
             </td>
             <td>
-                {{record.path}}
+                {{log.path}}
             </td>
             <td>
-                {{record.count}}
+                {{log.count}}
             </td>
         </tr>
         {% endfor %}
     </tbody>
 </table>
-
 <a class="btn btn-primary" href="{{ url_for('visits.pages_stat', download_csv=True) }}">Экспорт в CSV</a>
 {% endblock %}

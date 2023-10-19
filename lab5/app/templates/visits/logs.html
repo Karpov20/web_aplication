@@ -1,7 +1,6 @@
 {% extends 'visits/base.html' %}
-{% from 'pagination.html' import pagination %}
 
-{% block tab_content %}
+{% block logs %}
 <table class="table">
     <thead>
         <tr>
@@ -9,13 +8,16 @@
                 №
             </th>
             <th>
-                path
+                ID log
             </th>
             <th>
-                login
+                Пользователь
             </th>
             <th>
-                date
+                Страница
+            </th>
+            <th>
+                Дата
             </th>
         </tr>
     </thead>
@@ -26,10 +28,13 @@
                 {{loop.index}}
             </td>
             <td>
-                {{log.path}}
+                {{log.id}}
             </td>
             <td>
-                {{log.login or 'Анонимный пользователь'}}
+                {{log.FIO or 'Анонимный пользователь'}}
+            </td>
+            <td>
+                {{log.path}}
             </td>
             <td>
                 {{ log.created_at }}
@@ -38,5 +43,6 @@
         {% endfor %}
     </tbody>
 </table>
+<!-- Навигация по страницам -->
 {{ pagination(current_page, last_page, request.endpoint) }}
 {% endblock %}

@@ -1,4 +1,4 @@
-#Используется для генерации случайных чисел, в данном случае, для генерации комментариев в постах.
+
 from random import randint
 from flask import Flask, render_template
 from faker import Faker
@@ -16,7 +16,6 @@ images_ids = ['avatar',
               'ночная москва']
 def generate_comments(reply=True):
     comments = []
-    # max_quantity необходимо, чтобы контролировать количество ответов на комментарий
     if not(reply): 
         max_quantity = randint(0, 3)
     else: 
@@ -30,9 +29,7 @@ def generate_comments(reply=True):
                 start_date='-2y',
                 end_date='now'
             )}
-        # Если нужно генерировать ответы на комментарий
         if reply:
-            # Рекурсивно вызывается текущая функция, но с блокировкой ответов на комментарий
             comment['reply'] = generate_comments(reply=False)
         comments.append(comment)
     comments = sorted(comments, key=lambda comment: comment['date'], reverse=True)
@@ -51,8 +48,6 @@ def generate_post(index):
     '''
     return {
         'index': index,
-        # В силу особености генерации текста используется удаление точки в конце
-        # для того, чтобы название выглядело более красивым
         'title': fake.text(max_nb_chars=15).rstrip('.'),
         'img_id': images_ids[index],
         'text': fake.paragraph(nb_sentences=50),
@@ -62,28 +57,24 @@ def generate_post(index):
     }
 
 
-# Генерируем посты (статично)
 posts_list = [generate_post(i) for i in range(5)]
-# Для отображения самых актуальных постов используем сортировку
-# по дате и активируем отображение в обратном порядке
 posts_list = sorted(posts_list, key=lambda post: post['date'], reverse=True)
 
-# "Домашняя" страница
+
 @ app.route('/')
 def index():
     return render_template('index.html', msg='qq')
 
 
-# Страница с постами
+
 @ app.route('/posts')
 def posts():
     return render_template('posts.html', title='Посты', posts_list=posts_list)
 
 
-# Страница по каждому посту
+
 @ app.route('/post/<int:post_id>')
 def post(post_id):
-    # Чтобы сервис выводил нужный пост, выполняется поиск по индексу поста
     for post_item in posts_list:
         if post_item['index'] == post_id:
             desired_post = post_item
@@ -91,7 +82,7 @@ def post(post_id):
     return render_template('post.html', post=desired_post, title=desired_post['title'])
 
 
-# Страница о сайте
+
 @ app.route('/about')
 def about():
     return render_template('about.html', title='Об авторе')

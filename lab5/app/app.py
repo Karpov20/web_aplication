@@ -14,7 +14,7 @@ app.config.from_pyfile('config.py')
 db = MySQL(app)
 
 from auth import bp as auth_bp
-from auth import init_login_manager, permission_check
+from auth import init_login_manager, check_rights
 
 from visits import bp as visits_bp
 
@@ -54,7 +54,7 @@ def users():
 
 @app.route('/users/new')
 @login_required
-@permission_check('create')
+@check_rights('create')
 def users_new():
     roles_list = load_roles()
     return render_template('users_new.html', roles_list=roles_list, user={})
@@ -70,13 +70,12 @@ def load_roles():
 def extract_params(params_list):
     params_dict = {}
     for param in params_list:
-        # params_dict[param] = request.form[param] or None
-        params_dict[param] = request.form.get(param, None) or None
+        params_dict[param] = request.form.get(param)
     return params_dict
 
 @app.route('/users/create', methods=['POST'])
 @login_required
-@permission_check('create')
+@check_rights('create')
 def create_user():
     params = extract_params(PERMITED_PARAMS)
     query = 'INSERT INTO users(login, password_hash, last_name, first_name, middle_name, role_id) VALUES (%(login)s, SHA2(%(password)s, 256), %(last_name)s, %(first_name)s, %(middle_name)s, %(role_id)s);'
@@ -96,7 +95,7 @@ def create_user():
 
 @app.route('/users/<int:user_id>/update', methods=['POST'])
 @login_required
-@permission_check('edit')
+@check_rights('edit')
 def update_user(user_id):
     params = extract_params(EDIT_PARAMS)
     params['id'] = user_id
@@ -121,7 +120,7 @@ def update_user(user_id):
 
 @app.route('/users/<int:user_id>/edit')
 @login_required
-@permission_check('edit')
+@check_rights('edit')
 def edit_user(user_id):
     query = 'SELECT * FROM users WHERE users.id = %s;'
     cursor = db.connection().cursor(named_tuple=True)
@@ -133,7 +132,7 @@ def edit_user(user_id):
 
 @app.route('/users/<int:user_id>/delete', methods=['POST'])
 @login_required
-@permission_check('delete')
+@check_rights('delete')
 def delete_user(user_id):
     query = 'DELETE FROM users WHERE users.id=%s;'
     try:
@@ -149,7 +148,7 @@ def delete_user(user_id):
 
 
 @app.route('/user/<int:user_id>')
-@permission_check('show')
+@check_rights('show')
 def show_user(user_id):
     query = 'SELECT * FROM users WHERE users.id = %s;'
     cursor = db.connection().cursor(named_tuple=True)
@@ -157,4 +156,5 @@ def show_user(user_id):
     user = cursor.fetchone()
     cursor.close()
     return render_template('users_show.html', user=user)
+
 

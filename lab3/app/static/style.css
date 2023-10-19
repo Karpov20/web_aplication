@@ -2,12 +2,12 @@
 
 body {
 	min-height: 100vh;
-	background-color: blanchedalmond;
+	background-color: white;
 }
 
 .header,
 .footer {
-	background-color: rgb(23, 7, 46);
+	background-color: black;
 }
 
 .header *,

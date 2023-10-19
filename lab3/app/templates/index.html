@@ -1,9 +1,7 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<!-- Если пользователь аутентифицирован -->
 {% if current_user.is_authenticated %}
-<!-- Выводится приглашение -->
 Hi {{ current_user.login }}
 {% else %}
 Non authenticated

@@ -12,15 +12,19 @@ class UsersPolicy:
         return current_user.is_admin()
 
     def show(self):
-        return True
+        # Если есть атрибут (есть с чем сравнивать)
+        if getattr(self.record, 'id', None) and current_user.id == self.record.id:
+            return True
+        return current_user.is_admin()
     
     def edit(self):
-        if current_user.id == self.record.id:
+        # Если есть атрибут (есть с чем сравнивать)
+        if getattr(self.record, 'id', None) and current_user.id == self.record.id:
             return True
         return current_user.is_admin()
 
     def change_role(self):
         return current_user.is_admin()
-    
-    def show_stat(self):
+
+    def read_full_logs(self):
         return current_user.is_admin()
