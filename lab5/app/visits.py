@@ -1,17 +1,16 @@
 
-import io
-from flask import render_template, Blueprint, request, send_file
-from flask_login import current_user, login_required
-from app import db, app
+from flask import send_file, render_template, Blueprint, request, redirect, url_for, flash, current_app
+from flask_login import login_required, current_user
+from app import db
 from math import ceil
+from auth import check_rights
+import io
 PER_PAGE = 10
-
-from auth import permission_check, init_login_manager
 
 bp = Blueprint('visits', __name__, url_prefix='/visits')
 
-init_login_manager(app)
 
+# Экспорт данных в CSV
 def generate_report_file(records, fields):
     csv_content = '№,' + ','.join(fields) + '\n'
     for i, record in enumerate(records):
@@ -22,63 +21,75 @@ def generate_report_file(records, fields):
     f.seek(0)
     return f
 
+
 @bp.route('/')
 @login_required
 def logging():
-    page = request.args.get('page', 1, type = int)
-    if current_user.can('show_logs'):
-        query = ('SELECT visit_logs.*, users.login '
-                'FROM users RIGHT JOIN visit_logs ON visit_logs.user_id = users.id '
-                'ORDER BY created_at DESC LIMIT %s OFFSET %s')
-        with db.connection().cursor(named_tuple=True) as cursor:
-            cursor.execute(query, (PER_PAGE, (page-1)*PER_PAGE))
-            logs = cursor.fetchall()
+    page = request.args.get('page', 1, type=int)
+    # Запрос для любого пользователя
+    query = ('SELECT visit_logs.*, CONCAT_WS(" ",users.last_name, users.first_name, users.middle_name) as FIO '
+             'FROM users RIGHT JOIN visit_logs ON visit_logs.user_id = users.id WHERE users.id = %(user_id)s '
+             'ORDER BY created_at DESC LIMIT %(per_page)s OFFSET %(param_offset)s')
+    params = {
+        'per_page': PER_PAGE,
+        'param_offset': (page-1)*PER_PAGE,
+        'user_id': current_user.id,
+    }
+    # Запрос для тех, кто может читать все логи (например, администратор)
+    if current_user.can('read_full_logs', current_user):
+        query = ('SELECT visit_logs.*, CONCAT_WS(" ",users.last_name, users.first_name, users.middle_name) as FIO '
+                 'FROM users RIGHT JOIN visit_logs ON visit_logs.user_id = users.id '
+                 'ORDER BY created_at DESC LIMIT %(per_page)s OFFSET %(param_offset)s')
+        del params['user_id']
 
-        query = 'SELECT COUNT(*) AS count FROM visit_logs'
-        with db.connection().cursor(named_tuple=True) as cursor:
-            cursor.execute(query)
-            count = cursor.fetchone().count
-    else:
-        query = ('SELECT visit_logs.*, users.login '
-                'FROM visit_logs RIGHT JOIN users ON visit_logs.user_id = users.id WHERE users.id=%s '
-                'ORDER BY created_at DESC LIMIT %s OFFSET %s')
-        with db.connection().cursor(named_tuple=True) as cursor:
-            cursor.execute(query, (current_user.id, PER_PAGE, (page-1)*PER_PAGE))
-            logs = cursor.fetchall()
+    with db.connection().cursor(named_tuple=True) as cursor:
+        cursor.execute(query, (params))
+        print(params)
+        logs = cursor.fetchall()
 
-        query = 'SELECT COUNT(*) AS count FROM visit_logs WHERE visit_logs.user_id = %s'
-        with db.connection().cursor(named_tuple=True) as cursor:
-            cursor.execute(query, (current_user.id, ))
-            count = cursor.fetchone().count
-    
+    with db.connection().cursor(named_tuple=True) as cursor:
+        if current_user.can('read_full_logs', current_user):
+            query_count_page = 'SELECT COUNT(*) AS count FROM visit_logs'
+            cursor.execute(query_count_page)
+        else:
+            # Для пользователя должно учитываться только его количество записей
+            query_count_page = 'SELECT COUNT(*) AS count FROM visit_logs WHERE visit_logs.user_id = %s'
+            cursor.execute(query_count_page, (current_user.id,))
+        count = cursor.fetchone().count
+
     last_page = ceil(count/PER_PAGE)
 
-    return render_template('visits/logs.html', logs = logs, last_page = last_page, current_page = page)
+    return render_template('visits/logs.html', logs=logs, last_page=last_page, current_page=page)
 
-@bp.route('/stat/pages')
+
+@bp.route('/stats/pages')
 @login_required
-@permission_check('show_stat')
+@check_rights('read_full_logs')
 def pages_stat():
-    query = 'SELECT path, COUNT(*) as count FROM visit_logs GROUP BY path ORDER BY count DESC;'
+    query = ('SELECT visit_logs.path, COUNT(*) AS count FROM visit_logs GROUP BY visit_logs.path ORDER BY count DESC;')
     with db.connection().cursor(named_tuple=True) as cursor:
         cursor.execute(query)
-        records = cursor.fetchall()
+        logs = cursor.fetchall()
     if request.args.get('download_csv'):
-        f = generate_report_file(records, ['path', 'count'])
+        f = generate_report_file(logs, ['path', 'count'])
         return send_file(f, mimetype='text/csv', as_attachment=True, download_name='pages_stat.csv')
-    return render_template('visits/pages_stat.html', records=records)
-    
-@bp.route('/stat/users')
+    return render_template('visits/pages_stat.html', logs=logs)
+
+
+@bp.route('/stats/users')
 @login_required
-@permission_check('show_stat')
+@check_rights('read_full_logs')
 def users_stat():
-    query = ('SELECT users.first_name, users.last_name, users.middle_name, COUNT(visit_logs.id) AS count '
-                'FROM users RIGHT JOIN visit_logs ON users.id = visit_logs.user_id '
-                'GROUP BY users.login ORDER BY count DESC;')
+    query = ('SELECT CONCAT_WS(" ", users.last_name, users.first_name, users.middle_name) as FIO, COUNT(*) AS count '
+            'FROM users RIGHT JOIN visit_logs ON visit_logs.user_id = users.id '
+            'GROUP BY visit_logs.user_id '
+            'ORDER BY count DESC;')
     with db.connection().cursor(named_tuple=True) as cursor:
         cursor.execute(query)
-        records = cursor.fetchall()
+        logs = cursor.fetchall()
     if request.args.get('download_csv'):
-        f = generate_report_file(records, ['first_name', 'last_name', 'middle_name', 'count'])
+        f = generate_report_file(logs, ['FIO', 'count'])
         return send_file(f, mimetype='text/csv', as_attachment=True, download_name='users_stat.csv')
-    return render_template('visits/users_stat.html', records=records)
+    return render_template('visits/users_stat.html', logs=logs)
+
+

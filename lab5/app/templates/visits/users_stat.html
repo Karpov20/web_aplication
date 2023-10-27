@@ -1,6 +1,6 @@
 {% extends 'visits/base.html' %}
 
-{% block tab_content %}
+{% block logs %}
 <table class="table">
     <thead>
         <tr>
@@ -16,18 +16,16 @@
         </tr>
     </thead>
     <tbody>
-        {% for record in records %}
+        {% for log in logs %}
         <tr>
             <td>
                 {{loop.index}}
             </td>
             <td>
-                {{record.first_name or 'Анонимный пользователь'}}
-                {{record.last_name or ''}}
-                {{record.middle_name or ''}}
+                {{log.FIO or 'Неаутентифицированный пользователь'}}
             </td>
             <td>
-                {{record.count}}
+                {{log.count}}
             </td>
         </tr>
         {% endfor %}

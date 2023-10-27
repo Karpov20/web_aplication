@@ -39,7 +39,7 @@ def load_user(user_id):
     cursor.close()
     return user
 
-def permission_check(action):
+def check_rights(action):
     def decor(function):
         @wraps(function)
         def wrapper(*args, **kwargs):
@@ -48,8 +48,8 @@ def permission_check(action):
             if user_id:
                 user = load_user(user_id)
             if not current_user.can(action, user):
-                flash('Недостаточно прав', 'warning')
-                return redirect(url_for('users'))
+                flash('У вас недостаточно прав для доступа к данной странице', 'warning')
+                return redirect(url_for('index'))
             return function(*args, **kwargs)
         return wrapper
     return decor
