@@ -119,7 +119,10 @@ def update(book_id):
     try:
         book = Book.query.get(book_id)
         genres = request.form.getlist('genres')
+        short_desc = markdown.markdown(bleach.clean(request.form.get('short_desc'))) 
         genres = list(map(Genre.query.get, genres)) 
+        book.genres = genres   
+        book.short_desc = short_desc
         for key, value in parametres:
             if value:
                 setattr(book, key, value)
